@@ -29,16 +29,16 @@ def _policy() -> TsaPolicy:
 
 def test_confirmed_overlap():
     now = datetime.now(timezone.utc)
-    a = Anchor("tsa-a", now, 0.5)
-    b = Anchor("tsa-b", now + timedelta(seconds=0.2), 0.5)
+    a = Anchor("tsa-a", now, 0.5, mode="CTT")
+    b = Anchor("tsa-b", now + timedelta(seconds=0.2), 0.5, mode="CTT")
     v = quorum_verdict([a, b], _policy())
     assert v.status == "CONFIRMED"
 
 
 def test_disagreement_beyond_tolerance():
     now = datetime.now(timezone.utc)
-    a = Anchor("tsa-a", now, 0.1)
-    b = Anchor("tsa-b", now + timedelta(seconds=10), 0.1)
+    a = Anchor("tsa-a", now, 0.1, mode="CTT")
+    b = Anchor("tsa-b", now + timedelta(seconds=10), 0.1, mode="CTT")
     v = quorum_verdict([a, b], _policy())
     assert v.status == "DISAGREEMENT"
     assert v.gap and v.gap.total_seconds() > 2.0
@@ -46,7 +46,7 @@ def test_disagreement_beyond_tolerance():
 
 def test_insufficient_quorum_no_fallback():
     now = datetime.now(timezone.utc)
-    a = Anchor("tsa-a", now, 0.5)
+    a = Anchor("tsa-a", now, 0.5, mode="CTT")
     v = quorum_verdict([a], _policy())
     assert v.status == "INSUFFICIENT"
 

@@ -114,19 +114,25 @@ These are the questions that recur in papers, forums, alignment discussions, and
 
 ```
 london-fog / supreme-goggles/
-├── MASTER_PROMPT.md                 # orchestrator contract (Astra + code specialist + anchors)
-├── docs/ANCHORING_DESIGN.md         # full TSA / Rekor-v2 / monitor design
+├── README.md
+├── docs/
+│   ├── ANCHORING_DESIGN.md
+│   ├── INVARIANTS.md                # deferred fixtures, sandwich trust boundary
+│   └── ORCHESTRATOR_PROMPT.md       # research orchestrator contract (if present)
 ├── config/examples/artifact_astra_repair.yaml
 ├── scripts/
-│   ├── run_artifact.py              # pipeline entrypoint
-│   └── reproduce_qwen.py            # sparsity dry-run stub
-├── anchoring/                       # dual-TSA + tlog + monitor
-│   ├── tsa/policy.py                # registry, intervals, quorum, revocation
-│   ├── tlog/{config,tiles,inclusion}.py
+│   ├── run_artifact.py
+│   └── reproduce_qwen.py
+├── anchoring/
+│   ├── tsa/                         # policy, token parser, adapter (RFC 3161)
+│   ├── tlog/                        # tiles, inclusion, consistency (partial)
+│   ├── ledger/                      # JCS hash-chain
 │   ├── monitor/loop.py
-│   └── ceremony.py                  # ordered pre-write / post-write ceremony
-├── tests/test_tsa_quorum.py         # offline must-pass subset
-├── audit/ledger.jsonl
+│   └── ceremony.py
+├── tests/                           # phase -1 … 3 suites
+├── audit/
+│   ├── README.md                    # no committed ledger; created at first run
+│   └── legacy/                      # pre-chain placeholder (rejected by verify_chain)
 └── checkpoints/ probes/ edits/ reports/
 ```
 
@@ -138,6 +144,33 @@ PYTHONPATH=. python tests/test_tsa_quorum.py
 PYTHONPATH=. python scripts/run_artifact.py \
   --config config/examples/artifact_astra_repair.yaml --dry-run
 ```
+
+
+## Enforced vs stubbed (badge)
+
+| Invariant | Status | Evidence |
+|-----------|--------|----------|
+| `verify_inclusion` correct for all sizes 1–17 | **Enforced** | `tests/test_tlog_inclusion.py` (153 vectors) |
+| `verify_inclusion` not vulnerable to sibling-promotion bug | **Enforced** | `test_legacy_fails_exactly_the_20_known_cases` |
+| `TileStore.node` ancestor = `idx << r` | **Enforced** | `test_node_right_direction_regression` |
+| C2SP tile URL layout (incl. `.p/W`) | **Enforced** | `test_tile_path_examples` |
+| Ledger JCS (integer-only shim) | **Enforced (shim)** | `tests/test_ledger.py` |
+| Ledger JCS (full `rfc8785`) | **Enforced when rfc8785 installed** | shim-vs-library tests SKIPPED when missing |
+| Ledger locale independence | **Enforced** when ≥2 locales installable; else **SKIPPED** with reason | `test_entry_hash_is_locale_independent…` |
+| RFC 3161 adapter: 10 checks | **Enforced** | `tests/test_tsa_adapter.py` |
+| `attime` boundary (post-`notAfter`) | **Enforced** | `test_attime_after_not_after_fails` |
+| `attime` boundary (pre-`notBefore`) | **Enforced** | `test_attime_before_not_before_fails` |
+| `attime` expired-at-genTime fixture | **DEFERRED** | `docs/INVARIANTS.md` |
+| CTT/TTC enforcement in gate | **Enforced** | `tests/test_phase2.py` |
+| Pre-write CTT token re-verification | **Enforced** | `test_reeverifies_token_at_gate` |
+| TSA distrust corroboration | **Enforced** | `tests/test_phase3.py` |
+| Temporal sandwich | **WIRED_VIA_FIXTURE** | self-reported `first_observed_at` |
+| `verify_consistency` (append / fork-extension path) | **NOT IMPLEMENTED** | `pass` after TODO in `inclusion.py` |
+| Monitor tick (live checkpoint) | **STUBBED** | returns `MONITOR_STUB` |
+| Atomic checkpoint + rollback of weights | **NOT IMPLEMENTED** | Phase 6+ |
+| Ceremony terminal `COMPLETE` | **Not claimed without inclusion** | only `COMPLETE_UNANCHORED` / `AWAITING_INCLUSION` / `HALTED` |
+
+Rows marked SKIPPED inherit an honest skip reason from pytest, not a silent pass.
 
 ## Core invariants (non-negotiable)
 

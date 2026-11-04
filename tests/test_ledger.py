@@ -260,21 +260,45 @@ _EXPECTED_CANON = (
 
 
 def test_entry_hash_is_locale_independent_and_matches_hand_canonical_form():
-    """Python's str ops are locale-free, so this is a regression guard (anyone introducing locale-dependent
-    formatting or sort breaks it) plus a known-answer check against a hand-written RFC 8785 string."""
+    """Hash must be identical under every installable locale; skip if fewer than 2 locales available.
+
+    A test whose result depends on an unavailable facility is SKIPPED, never PASSED.
+    """
+    import locale
     want = hashlib.sha256(_EXPECTED_CANON).hexdigest()
     assert compute_entry_hash(ast.literal_eval(_FIXTURE_SRC)) == want
+
+    candidates = ["C", "C.UTF-8", "POSIX", "en_US.UTF-8", "tr_TR.UTF-8", "ja_JP.UTF-8"]
+    available = []
+    for loc in candidates:
+        try:
+            locale.setlocale(locale.LC_ALL, loc)
+            available.append(loc)
+        except locale.Error:
+            pass
+    locale.setlocale(locale.LC_ALL, "C")
+    if len(available) < 2:
+        pytest.skip(
+            f"only {len(available)} of {len(candidates)} locales installable ({available}); "
+            "cannot prove independence across locales"
+        )
+
     script = (
-        "import sys, ast; sys.path.insert(0, sys.argv[1])\n"
+        "import sys, ast, locale; sys.path.insert(0, sys.argv[1])\n"
+        "loc = sys.argv[2]\n"
+        "locale.setlocale(locale.LC_ALL, loc)\n"
         "from anchoring.ledger import compute_entry_hash\n"
         f"print(compute_entry_hash(ast.literal_eval({_FIXTURE_SRC!r})))\n"
     )
     seen = {}
-    for lang in ("C", "tr_TR.UTF-8", "en_US.UTF-8", "ja_JP.UTF-8"):
-        env = {**os.environ, "LANG": lang, "LC_ALL": lang, "LC_CTYPE": lang}
-        out = subprocess.run([sys.executable, "-c", script, str(REPO)], env=env, capture_output=True, text=True, check=True)
-        seen[lang] = out.stdout.strip()
+    for loc in available:
+        out = subprocess.run(
+            [sys.executable, "-c", script, str(REPO), loc],
+            capture_output=True, text=True, check=True,
+        )
+        seen[loc] = out.stdout.strip()
     assert set(seen.values()) == {want}, seen
+
 
 
 # 5. Floats / unsafe values ------------------------------------------------ #

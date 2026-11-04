@@ -10,7 +10,6 @@ requires-python = ">=3.10"
 dependencies = [
     "cryptography>=42",
     "rfc8785>=0.1.4",   # RFC 8785 JCS; required in production (Phase 0 adds a fail-closed integer-only shim for sandboxes only)
-    "asn1crypto>=1.5",  # RFC 3161 token parsing (Phase 1)
     "pyyaml>=6",
     "requests>=2.31",
 ]
