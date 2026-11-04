@@ -1,3 +1,7 @@
+## Badge cross-reference
+
+Invariant status lives in the **Enforced vs stubbed** table in `README.md`. This file tracks deferred fixtures and trust-boundary notes; do not duplicate badge rows here without updating README.
+
 # London Fog — tracked invariants & deferred fixtures
 
 ## Phase 1 signed limits

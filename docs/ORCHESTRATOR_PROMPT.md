@@ -1,3 +1,9 @@
+# Orchestrator prompt (research example)
+
+> **Not a product claim.** Model names in this document are placeholders for whatever
+> reasoning / code endpoints your runtime provides. Parameterize via
+> `config/examples/weight_edit_repair.yaml`. Do not treat them as verified SKUs.
+
 # MASTER PROMPT: ARTIFACT + Astra + MAI-Code-1-Flash + Anchoring
 
 Paste the block below into an agent runtime that has API access to the reasoning/code models and a local checkout of this supreme-goggles harness.

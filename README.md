@@ -17,6 +17,25 @@ No knowledge is injected. No capability is added. Only a specified defect is rem
 
 ---
 
+
+## Architecture decision (branch `london-fog-phases`)
+
+**Choice: (a) Merge — complementary layers**
+
+| Layer | Tree | Role |
+|-------|------|------|
+| **ARTIFACT** (pre–London-Fog scaffold) | On GitHub `main` today as `artifact/` | Weight-edit harness: probe, hypothesis, sparse edit, verify, checkpoint of tensors |
+| **London Fog** (this branch content) | `anchoring/`, `tests/test_tlog_*`, `tests/test_tsa_*`, `tests/test_phase*` | Pre-write fail-closed gate (dual-TSA + CTT re-verify) and post-write detection (tlog + monitor) |
+
+`anchoring/ceremony.py` does **not** write weights. It returns `weight_write=True` only after CTT + quorum + revocation gates pass. The orchestrator / ARTIFACT harness remains responsible for the actual tensor write and atomic model checkpoint.
+
+**Integration (follow-up commit):** wire `artifact/harness.py` (or `scripts/run_artifact.py`) to call `run_ceremony(...)` before any weight write and to refuse the write when `CeremonyResult.weight_write` is false.
+
+**Enforcement gap (honest):** London Fog authorizes; ARTIFACT writes. Until `artifact/harness.py` consults `weight_write` before the tensor write path, the pre-write gate is a **decision record**, not an **enforcement point**. The badge row *ARTIFACT: COEXIST — not integrated* means exactly that: the gate exists and the writer exists; the two are not yet wired. Do not promote that row to Enforced until a test shows ARTIFACT refuses the write when `weight_write=False` (Phase 8 wire-up test, not Phase 4).
+
+
+Until that wire-up lands, the badge marks ARTIFACT as **present on main, not yet integrated** with the gate.
+
 ## What this is for
 
 Modern model-editing literature (ROME, MEMIT, weight-space programming, abliteration, etc.) has shown that small, structured changes to weights can change behaviour. The open problem is no longer “can we edit?” but:
@@ -119,7 +138,7 @@ london-fog / supreme-goggles/
 │   ├── ANCHORING_DESIGN.md
 │   ├── INVARIANTS.md                # deferred fixtures, sandwich trust boundary
 │   └── ORCHESTRATOR_PROMPT.md       # research orchestrator contract (if present)
-├── config/examples/artifact_astra_repair.yaml
+├── config/examples/weight_edit_repair.yaml
 ├── scripts/
 │   ├── run_artifact.py
 │   └── reproduce_qwen.py
@@ -142,7 +161,7 @@ london-fog / supreme-goggles/
 cd supreme-goggles   # or london-fog
 PYTHONPATH=. python tests/test_tsa_quorum.py
 PYTHONPATH=. python scripts/run_artifact.py \
-  --config config/examples/artifact_astra_repair.yaml --dry-run
+  --config config/examples/weight_edit_repair.yaml --dry-run
 ```
 
 
@@ -168,6 +187,8 @@ PYTHONPATH=. python scripts/run_artifact.py \
 | `verify_consistency` (append / fork-extension path) | **NOT IMPLEMENTED** | `pass` after TODO in `inclusion.py` |
 | Monitor tick (live checkpoint) | **STUBBED** | returns `MONITOR_STUB` |
 | Atomic checkpoint + rollback of weights | **NOT IMPLEMENTED** | Phase 6+ |
+| ARTIFACT scaffold (`artifact/` on main) | **COEXIST — not integrated** | Gate authorizes; ARTIFACT writes; wire-up pending |
+| Config model endpoints | **Parameterized** | `config/examples/weight_edit_repair.yaml` |
 | Ceremony terminal `COMPLETE` | **Not claimed without inclusion** | only `COMPLETE_UNANCHORED` / `AWAITING_INCLUSION` / `HALTED` |
 
 Rows marked SKIPPED inherit an honest skip reason from pytest, not a silent pass.
@@ -189,7 +210,7 @@ Rows marked SKIPPED inherit an honest skip reason from pytest, not a silent pass
 Research scaffold. Live weight edits require:
 
 - Target model weights
-- Reasoning + code model APIs (Astra / specialist)
+- Reasoning + code model API endpoints (parameterized in config; not product claims)
 - Configured dual-TSA endpoints and root PEMs
 - Rekor v2 shard resolved via TUF / signing-config (do not hard-code)
 - Orchestrator Ed25519 key for run-anchor signatures

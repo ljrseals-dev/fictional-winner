@@ -40,9 +40,9 @@ def main() -> int:
         print(f"  - FAIL: {e}", file=sys.stderr)
         return 1
 
-    print("[ARTIFACT] Full pipeline requires live Astra + MAI-Code-1-Flash APIs")
+    print("[ARTIFACT] Full pipeline requires configured reasoning + code model endpoints")
     print("           and configured TSA endpoints + Rekor v2 shard.")
-    print("[ARTIFACT] See MASTER_PROMPT.md and docs/ANCHORING_DESIGN.md")
+    print("[ARTIFACT] See docs/ORCHESTRATOR_PROMPT.md and docs/ANCHORING_DESIGN.md")
     return 0
 
 
