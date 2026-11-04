@@ -15,12 +15,12 @@ def _policy() -> TsaPolicy:
     reg = {
         "tsa-a": TsaEntry(
             tsa_id="tsa-a", role="primary", url="https://a.example",
-            policy_oid="1.2.3", root_pem_path="/dev/null",
+            operator_id="op-a", distrust_after=None, policy_oid="1.2.3", root_pem_path="/dev/null",
             root_fingerprint_sha256="aa", max_accuracy_s=1.0,
         ),
         "tsa-b": TsaEntry(
             tsa_id="tsa-b", role="witness", url="https://b.example",
-            policy_oid="1.2.3", root_pem_path="/dev/null",
+            operator_id="op-b", distrust_after=None, policy_oid="1.2.3", root_pem_path="/dev/null",
             root_fingerprint_sha256="bb", max_accuracy_s=1.0,
         ),
     }

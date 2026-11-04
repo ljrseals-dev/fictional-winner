@@ -11,11 +11,12 @@ class TsaEntry:
     tsa_id: str
     role: str  # "primary" | "witness"
     url: str
+    operator_id: str  # REQUIRED, distinct from tsa_id; two tsa_ids with one operator_id are ONE TSA (enforced in Phase 5)
     policy_oid: str
     root_pem_path: str
     root_fingerprint_sha256: str
     max_accuracy_s: float
-    distrust_after: str | None = None  # ISO-8601
+    distrust_after: str | None  # REQUIRED, ISO-8601 or an explicit None meaning "no known distrust"
     not_after: str | None = None
     allow_ess_v1: bool = False
     jurisdiction: str = ""
